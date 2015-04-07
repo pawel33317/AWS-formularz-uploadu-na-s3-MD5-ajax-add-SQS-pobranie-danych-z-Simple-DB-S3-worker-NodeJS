@@ -1,8 +1,13 @@
 {	"expiration" : {"day":1},
-	"conditions": [ ["starts-with", "$key", "pawel.czubak/"],
-    				 {"bucket": "lab4-weeia"}, 
-    				 {"acl": "private"}, 
-				 {"success_action_redirect": "http://54.191.60.137:8080/bucketcr"},
-    				 ["content-length-range", 0, 1048576]
-    				]   
+	"conditions": 
+	[
+		["starts-with", "$key", "pawel.czubak/"],
+    	{"bucket": "lab4-weeia"}, 
+    	{"acl": "public-read"}, 
+		["starts-with", "$x-amz-meta-uploader", ""],
+		["starts-with", "$x-amz-meta-ip", ""],
+		["starts-with", "$uploader", ""],
+		{"success_action_redirect": "http://52.10.30.124:8080/bucketcr"},
+    	["content-length-range", 0, 1048576]
+    ]   
 }

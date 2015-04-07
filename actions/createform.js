@@ -8,6 +8,14 @@ var INDEX_TEMPLATE = "index.ejs";
 
 
 var task = function(request, callback){
+	
+
+    var ipAddress = request.connection.remoteAddress;
+
+console.log(ipAddress);
+	
+	
+	
 	//1. load configuration
 	var awsConfig = helpers.readJSONFile(AWS_CONFIG_FILE);
 	var policyData = helpers.readJSONFile(POLICY_FILE);
@@ -20,7 +28,12 @@ var task = function(request, callback){
 	//4. get bucket name
 	
 	var fields = s3Form.generateS3FormFields();
+	fields.push( {name : 'x-amz-meta-uploader', value : 'pawel.czubak'});
+	fields.push( {name : 'x-amz-meta-ip', value : ipAddress});
+	fields.push( {name : 'uploader', value : 'pawel.czubak'});
 	var fieldsSecret=s3Form.addS3CredientalsFields(fields, awsConfig);
+//	fields += '<imput type="hidden" name="x-amz-meta-uploader" value="pawel.czubak"/>';
+//	fields.push( {name : 'x-amz-meta-uploader', value : 'pawel.czubak'});
 //	callback(null, {template: INDEX_TEMPLATE, params:{fields:fields, bucket:""}});
 callback(null, {template: INDEX_TEMPLATE, params:{fields:fields, bucket:"lab4-weeia"}});
 }
