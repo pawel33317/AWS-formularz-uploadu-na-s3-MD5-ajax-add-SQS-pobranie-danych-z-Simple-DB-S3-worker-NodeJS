@@ -21,6 +21,10 @@ var linkKolejki = tablicaKolejki.QueueUrl
 //obiekt kolejki z aws-sdk
 var sqs=new AWS.SQS();
 
+//obiekt do obsługi simple DB z aws-sdk
+var simpledb = new AWS.SimpleDB();
+
+
 //funkcja która zostanie wykonana po wejściu na stronę 
 //request dane o zapytaniu, callback funkcja zwrotna zwracająca kod html
 var task =  function(request, callback){
@@ -75,38 +79,98 @@ var task =  function(request, callback){
 			}
 
 			
-		//Funkcja zwracająca kod HTML wyświetlany na ekranie
-		//jest tez zapytanie ajaksowe odpytujące getShortcut o skrót 
-		callback(null,'<br>bucket: '+bucket
-				+"<br>key: "+key
-				+"<br>etag: "+etag
-				+"<br>IP: "+data.Metadata.ip
-				+"<br>Uploader: "+data.Metadata.uploader
-				+"<br><a href='http://"+bucket+".s3.amazonaws.com/"+key+"'>Download</a>"
-				+"<br>Skrót będzie wyliczony przez inny projekt z kolejki"
-				+"<div id=\"skrot\" style=\"border:1px solid red;\">Oczekiwanie... </div>"
-				+'<script>\n'
-				+'function loadShortCut(){\n'
-				+'	var xmlhttp;\n'
-				+'	xmlhttp=new XMLHttpRequest();\n'
-				+'	xmlhttp.onreadystatechange=function(){\n'
-				+'		if (xmlhttp.readyState==4 && xmlhttp.status==200){\n'
-				+'			if (xmlhttp.responseText.length){\n'
-				+'				document.getElementById("skrot").innerHTML = xmlhttp.responseText;\n'
-				+'			}\n'
-				+'		}\n'
-				+'	}\n'
-				+'	xmlhttp.open("GET","getShortcut");\n'
-				+'	xmlhttp.send();\n'
-				+'	t = setTimeout("loadShortCut()", 5000);\n'
-				+'}\n'
-				+'setTimeout("loadShortCut()", 5000);\n'
-				+'</script>\n'
+		//Tworzy domene czyli tabele w bazie	
+		/*var paramsXXX = {DomainName: 'czubakd1'};
+		simpledb.createDomain(paramsXXX, function(err, data) {
+			if (err) console.log(err, err.stack); 
+			else     console.log(data);  
+		});*/
+
+		
+		//Lista domen
+		/*var paramsXX = {};
+		simpledb.listDomains(paramsXX, function(err, data) {
+		  if (err) console.log(err, err.stack); // an error occurred
+		  else     console.log(data);           // successful response
+		});*/
+
+		
+		//czubakd1 baza dla plików i ich skrótów   name->key   value->hash 
+		//czubakdlog1 baza dla wyświetleń strony  name->time  value->ip //powinnobyć w pliku create form
+		
+		
+		//wrzuca do bazy dane
+		var paramsdb = {
+		  Attributes: [
+			{ Name: key, Value: 'Shortcut not yet been generated.', Replace: true}
+		  ],
+		  DomainName: "czubakd1", 
+		  ItemName: 'ITEM001'
+		};
+		simpledb.putAttributes(paramsdb, function(err, datass) {
+			if (err) {
+				console.log('ZLEEEEEEEEEEEEEEEEEEEEE'+err, err.stack);
+			}
+			else {
+			
+				//odczytuje z bazy dane i wywala na konsole
+				var paramsXXXX = {
+					DomainName: 'czubakd1', //required 
+					ItemName: 'ITEM001', // required 
+				};
+				simpledb.getAttributes(paramsXXXX, function(err, data) {
+					if (err) {
+						console.log(err, err.stack); // an error occurred
+					}
+					else {     
+						console.log(data);           // successful response
+					}
+				});			
+			
+				//console.log('OOOOOOOOOKKKKKKKKKKKKKK'+datass);
 				
-				);	
+				//Funkcja zwracająca kod HTML wyświetlany na ekranie
+				//jest tez zapytanie ajaksowe odpytujące getShortcut o skrót 
+				callback(null,'<br>bucket: '+bucket
+						+"<br>key: "+key
+						+"<br>etag: "+etag
+						+"<br>IP: "+data.Metadata.ip
+						+"<br>Uploader: "+data.Metadata.uploader
+						+"<br><a href='http://"+bucket+".s3.amazonaws.com/"+key+"'>Download</a>"
+						+"<br>Skrót będzie wyliczony przez inny projekt z kolejki"
+						+"<div id=\"skrot\" style=\"border:1px solid red;\">Oczekiwanie... </div>"
+						+'<script>\n'
+						+'function loadShortCut(){\n'
+						+'	var xmlhttp;\n'
+						+'	xmlhttp=new XMLHttpRequest();\n'
+						+'	xmlhttp.onreadystatechange=function(){\n'
+						+'		if (xmlhttp.readyState==4 && xmlhttp.status==200){\n'
+						+'			if (xmlhttp.responseText.length){\n'
+						+'				document.getElementById("skrot").innerHTML = xmlhttp.responseText;\n'
+						+'			}\n'
+						+'		}\n'
+						+'	}\n'
+						+'	xmlhttp.open("GET","getShortcut?key='+key+'");\n'
+						+'	xmlhttp.send();\n'
+						+'	t = setTimeout("loadShortCut()", 5000);\n'
+						+'}\n'
+						//+'setTimeout("loadShortCut()", 5000);\n'
+						+'loadShortCut();\n'
+						+'</script>\n'			
+						);	
+			}
+		});
+		
+
+
+
+
+
+
+
+			
+
         });
-		
-		
 		/*wyliczenie skrótu przeniesione do innego projektu
 		//Wyliczenie skrótu czyki sumy kontrolnej dla pliku 
 		var algorithms = ['sha1', 'md5', 'sha256', 'sha512']
